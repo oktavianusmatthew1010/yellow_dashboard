@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Calendar, User, CheckCircle, XCircle, Clock, MapPin, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, User, CheckCircle, XCircle, Clock, MapPin, Image as ImageIcon, X, ZoomIn } from 'lucide-react';
 
 export default function ChecklistDetail() {
   const { id } = useParams();
   const [checklist, setChecklist] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     fetchChecklist();
@@ -66,6 +67,29 @@ export default function ChecklistDetail() {
 
   return (
     <div className="space-y-6">
+      {/* Image Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4 transition-opacity"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-full max-h-full flex flex-col items-center">
+            <button 
+              className="absolute -top-10 right-0 md:-right-10 text-white hover:text-gray-300 p-2 focus:outline-none"
+              onClick={() => setSelectedImage(null)}
+            >
+              <X className="h-8 w-8" />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Full size evidence" 
+              className="max-w-full max-h-[85vh] rounded shadow-2xl object-contain"
+              onClick={(e) => e.stopPropagation()} 
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center space-x-4">
         <Link to="/" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
           <ArrowLeft className="h-6 w-6 text-gray-600" />
@@ -107,7 +131,7 @@ export default function ChecklistDetail() {
                 {toArray(group.items).map((item) => (
                   <div key={item.id} className="px-4 py-3 flex items-start justify-between hover:bg-gray-50">
                     <div className="flex-1 pr-4">
-                      <p className="text-sm text-gray-900 font-medium">{item.title}</p>
+                      <p className="text-sm text-gray-900 font-medium whitespace-pre-wrap break-words">{item.title}</p>
                       
                       <div className="mt-2 space-y-2">
                         {item.lastCheckedAt && (
@@ -131,21 +155,32 @@ export default function ChecklistDetail() {
 
                         {item.photoUri && (
                           <div className="mt-2">
-                            {item.photoUri.startsWith('blob:') ? (
+                            {item.photoUri.startsWith('blob:') || item.photoUri.startsWith('file:') ? (
                               <div className="flex items-center text-xs text-gray-400 italic bg-gray-100 p-2 rounded">
                                 <ImageIcon className="h-4 w-4 mr-2" />
                                 Image stored locally on device
                               </div>
                             ) : (
-                              <img 
-                                src={item.photoUri} 
-                                alt="Checklist evidence" 
-                                className="h-32 w-auto rounded border border-gray-200 object-cover"
-                                onError={(e) => {
-                                  e.target.onerror = null; 
-                                  e.target.src = 'https://placehold.co/400x300?text=Image+Not+Available';
-                                }}
-                              />
+                              <div 
+                                className="relative group cursor-pointer inline-block mt-2"
+                                onClick={() => setSelectedImage(item.photoUri)}
+                              >
+                                <img 
+                                  src={item.photoUri} 
+                                  alt="Checklist evidence" 
+                                  className="h-32 w-auto rounded border border-gray-200 object-cover transition-transform duration-200 group-hover:scale-105"
+                                  onError={(e) => {
+                                    e.target.onerror = null; 
+                                    // Fallback to a placeholder that indicates the image is missing/broken
+                                    e.target.src = 'https://placehold.co/400x300?text=Image+Missing+on+Server';
+                                    // Optional: Add a class to indicate error state if needed
+                                    e.target.className = "h-32 w-auto rounded border border-red-200 object-cover opacity-50";
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center rounded">
+                                   <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all duration-200 h-8 w-8 drop-shadow-lg" />
+                                </div>
+                              </div>
                             )}
                           </div>
                         )}
