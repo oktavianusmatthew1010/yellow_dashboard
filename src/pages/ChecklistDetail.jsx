@@ -33,6 +33,29 @@ export default function ChecklistDetail() {
     });
   };
 
+  const resolveImageUrl = (photoUri) => {
+    if (!photoUri) return null;
+    if (photoUri.startsWith('http://') || photoUri.startsWith('https://')) return photoUri;
+    if (photoUri.startsWith('blob:') || photoUri.startsWith('file:')) return photoUri;
+
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const apiBase = apiUrl.replace(/\/api\/v1\/?$/, '');
+
+    if (photoUri.startsWith('/public/')) {
+      return `${apiBase}${photoUri}`;
+    }
+
+    if (photoUri.startsWith('public/')) {
+      return `${apiBase}/${photoUri}`;
+    }
+
+    if (photoUri.startsWith('uploads/')) {
+      return `${apiBase}/public/${photoUri}`;
+    }
+
+    return `${apiBase}/public/uploads/${photoUri.replace(/^\/+/, '')}`;
+  };
+
   if (loading) {
     return <div className="p-8 text-center">Loading...</div>;
   }
@@ -128,7 +151,10 @@ export default function ChecklistDetail() {
                 {group.title || group.name}
               </div>
               <div className="divide-y">
-                {toArray(group.items).map((item) => (
+                {toArray(group.items).map((item) => {
+                  const resolvedPhotoUri = resolveImageUrl(item.photoUri);
+
+                  return (
                   <div key={item.id} className="px-4 py-3 flex items-start justify-between hover:bg-gray-50">
                     <div className="flex-1 pr-4">
                       <p className="text-sm text-gray-900 font-medium whitespace-pre-wrap break-words">{item.title}</p>
@@ -163,10 +189,10 @@ export default function ChecklistDetail() {
                             ) : (
                               <div 
                                 className="relative group cursor-pointer inline-block mt-2"
-                                onClick={() => setSelectedImage(item.photoUri)}
+                                onClick={() => setSelectedImage(resolvedPhotoUri)}
                               >
                                 <img 
-                                  src={item.photoUri} 
+                                  src={resolvedPhotoUri} 
                                   alt="Checklist evidence" 
                                   className="h-32 w-auto rounded border border-gray-200 object-cover transition-transform duration-200 group-hover:scale-105"
                                   onError={(e) => {
@@ -211,7 +237,8 @@ export default function ChecklistDetail() {
                       )}
                     </div>
                   </div>
-                ))}
+                );
+                })}
               </div>
             </div>
           ))}
