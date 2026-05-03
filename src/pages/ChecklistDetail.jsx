@@ -15,7 +15,12 @@ export default function ChecklistDetail() {
 
   const fetchChecklist = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/tasks/detail/${id}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/tasks/detail/${id}?_ts=${Date.now()}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
+        },
+      });
       setChecklist(response.data);
     } catch (error) {
       console.error('Error fetching checklist:', error);

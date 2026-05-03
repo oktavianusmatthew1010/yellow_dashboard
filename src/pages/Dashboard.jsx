@@ -20,11 +20,17 @@ export default function Dashboard() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
+      params.append('_ts', String(Date.now()));
       if (currentFilters.startDate) params.append('startDate', currentFilters.startDate);
       if (currentFilters.endDate) params.append('endDate', currentFilters.endDate);
       if (currentFilters.location) params.append('location', currentFilters.location);
 
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/tasks?${params.toString()}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/tasks?${params.toString()}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
+        },
+      });
       setChecklists(response.data.rows || []);
     } catch (error) {
       console.error('Error fetching checklists:', error);
